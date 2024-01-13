@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<style>
+pre code {
+  background-color: #eee;
+  border: 1px solid #999;
+  display: block;
+  padding: 20px;
+}
+</style>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ćwiczenie 6</title>
+<link href="data:text/css,%3Ais(%5Bid*%3D'google_ads_iframe'%5D%2C%5Bid*%3D'taboola-'%5D%2C.taboolaHeight%2C.taboola-placeholder%2C%23credential_picker_container%2C%23credentials-picker-container%2C%23credential_picker_iframe%2C%5Bid*%3D'google-one-tap-iframe'%5D%2C%23google-one-tap-popup-container%2C.google-one-tap-modal-div%2C%23amp_floatingAdDiv%2C%23ez-content-blocker-container)%20%7Bdisplay%3Anone!important%3Bmin-height%3A0!important%3Bheight%3A0!important%3B%7D" rel="stylesheet" type="text/css"></head>
+<body>
+
+<h1>Wprowadzenie do sztucznej inteligencji - ćwiczenie 6</h1>
+Proszę zaimplementować algorytm Q-Learning i użyć go do wyznaczenia polityki decyzyjnej dla problemu <a href="https://gymnasium.farama.org/environments/toy_text/frozen_lake/">FrozenLake8x8</a>.
+
+W problemie tym celem agenta jest przedostanie się przez zamarznięte 
+jezioro z domu do celu, unikając dziur (zawsze rozpoczynamy epizod z 
+górnego lewego rogu mapy, który ma współrzędne 0). Symulator dla tego 
+problemu można pobrać w sposób typowy dla pythona:
+<pre>  <code>
+  pip3 install gymnasium
+  </code>
+</pre>
+Na początku proszę się zająć wersją bez poślizgu: 
+
+<pre>  <code>
+import gymnasium as gym
+env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=False)
+state_size = env.observation_space.n
+action_size = env.action_space.n
+  </code>
+</pre>
+W tym scenariuszu wystarcza 1000 epizodów, maksymalnie 200 kroków na epizod.
+ 
+<p>Dla każdego epizodu, dla minimum 25 niezależnych uruchomień uczenia 
+Q-learning, wyliczyć i zwizualizować na wykresie średnie wartości 
+oryginalnych nagród (tych z gym) w funkcji numeru epizodu. Poniżej szkic
+ kodu:
+</p><pre>  <code>
+num_of_ind_runs = 25
+num_episodes = 1000
+averaged_reward = np.zeros( num_episodes)
+for run in range(num_of_ind_runs):
+   qtable = np.zeros((state_size, action_size))
+   ...
+   for episode in range(num_episodes):
+      ...
+      averaged_reward[episode] = averaged_reward[episode] + reward
+      ...
+averaged_reward = averaged_reward/(num_of_ind_runs)
+averaged_reward_base = averaged_reward #niech to będą wyniki bazowe, z którymi będziemy porównywać wyniki dla innych ustawień, czy funkcji oceny
+  </code>
+</pre>
+Obliczenia należy powtórzyć dla zmienionej na potrzeby eksperymentu 
+wersji algorytmu, po czym należy narysować wyniki (2 krzywe na jednym 
+wykresie):
+<pre>  <code>
+import matplotlib.pyplot as plt
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+ax.spines['left'].set_position('center')
+ax.spines['bottom'].set_position('zero')
+ax.spines['right'].set_color('none')
+ax.spines['top'].set_color('none')
+ax.xaxis.set_ticks_position('bottom')
+ax.yaxis.set_ticks_position('left')
+plt.plot(averaged_reward_base, 'r')
+plt.plot(averaged_reward, 'b')
+plt.show()
+  </code>
+</pre>
+    
+Powinno wyjść coś takiego:<br>
+<img src="cwiczenie-06_files/RlPlot.png"><br>
+Dane zwizualizowane na niebiesko powstały przy identycznych ustawieniach
+ jak te pokazane na czerwono, widać więc znaczny wpływ losowości pomimo 
+uśrednienia.
+<p></p>
+
+<p>Należy porównać wyniki domyślnego sposobu nagradzania (1 za dojście 
+do celu, 0 w przeciwnym przypadku) z dwoma własnymi systemami nagród i 
+kar. Propozycje te powinny częściej niż oryginalny system dawać 
+niezerową informację zwrotną agentowi. Można łatwo dowiedzieć się co się
+ stało na podstawie oryginalnych informacji z gym, np. if done and r == 
+0: wpadł do dziury; if state == next_state: poszedł w ścianę.</p>
+
+W drugiej części badań należy włączyć poślizg (is_slippery=True), należy
+ zwiększyć liczbę epizodów do 10000. Jakie są zmiany w stosunku do 
+wersji bez poślizgu? Jak często udaje się dość do celu? Jak 
+zaproponowane wcześniej systemy nagród wpływają na wyniki w odniesieniu 
+do wyników podstawowego systemu oceny? Spisać wnioski.
+
+
+<script type="text/javascript" src="cwiczenie-06_files/injectedPasswordless.js"></script></body></html>
