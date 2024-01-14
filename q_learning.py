@@ -72,7 +72,7 @@ class Agent:
 
         return self.reward_system.on_nothing
 
-    def episode(self) -> float:
+    def episode(self, training: bool = True) -> float:
         total_rewards = 0
         state, _ = self.env.reset()
 
@@ -82,7 +82,8 @@ class Agent:
             next_state, env_reward, terminated, truncated, _ = self.env.step(action)
             response = EnvironmentResponse(state, next_state, float(env_reward), terminated, truncated)
             reward = self.calculate_reward(response)
-            self.update_q_table(state, next_state, action, reward)
+            if training:
+                self.update_q_table(state, next_state, action, reward)
 
             episode_end = truncated or terminated
             state = next_state
@@ -98,3 +99,11 @@ class Agent:
             self.decay_epsilon()
 
         return self.q_table, episode_rewards
+
+    def evaluate(self, n_episodes: int) -> float:
+        successes = 0
+        for _ in range(n_episodes):
+            if self.episode(training=False) > 0:
+                successes += 1
+
+        return successes / n_episodes

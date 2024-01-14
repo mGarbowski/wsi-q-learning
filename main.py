@@ -13,6 +13,7 @@ ALTERNATE_REWARD_SYSTEM_2 = RewardSystem(1, -10, 0, 0)
 
 @dataclass
 class Experiment:
+    label: str
     board_size: int
     slippery: bool
     reward_system: RewardSystem
@@ -23,10 +24,11 @@ class Experiment:
     epsilon_decay: float = 0.5
     min_epsilon: float = 0.03
     discount_factor: float = 0.9
+    n_evaluate_episodes: int = 100
 
-    def train_agent(self):
+    def make_agent(self) -> Agent:
         env = make_env(size=self.board_size, visible=False, slippery=self.slippery)
-        agent = Agent(
+        return Agent(
             env=env,
             reward_system=self.reward_system,
             n_episodes=self.n_episodes,
@@ -37,21 +39,22 @@ class Experiment:
             min_epsilon=self.min_epsilon
         )
 
-        return agent.train()
-
-    def averaged_rewards(self) -> np.ndarray:
+    def averaged_results(self) -> tuple[np.ndarray, float]:
         avg_rewards = np.zeros(self.n_episodes)
+        avg_success_rate = 0
         for _ in range(self.n_independent_runs):
-            _, rewards = self.train_agent()
+            agent = self.make_agent()
+            _, rewards = agent.train()
             avg_rewards += rewards
+            avg_success_rate += agent.evaluate(self.n_evaluate_episodes)
         avg_rewards /= self.n_independent_runs
-        return avg_rewards
+        avg_success_rate /= self.n_independent_runs
+        return avg_rewards, avg_success_rate
 
 
 @dataclass
 class PlotData:
     data: np.ndarray
-    color: str
     label: str
 
 
@@ -65,7 +68,7 @@ def compare_results(results: list[PlotData], plot_path: str = None):
     ax.xaxis.set_ticks_position('bottom')
     ax.yaxis.set_ticks_position('left')
     for result in results:
-        plt.plot(result.data, result.color, label=result.label)
+        plt.plot(result.data, label=result.label)
     plt.legend()
     if plot_path is not None:
         plt.savefig(plot_path)
@@ -90,66 +93,77 @@ def make_env(size: int = 8, visible: bool = False, slippery: bool = False):
 
 def experiment_1():
     ex_1 = Experiment(
+        label="Default rewards",
         board_size=4,
         slippery=False,
         reward_system=DEFAULT_REWARD_SYSTEM,
     )
 
     ex_2 = Experiment(
+        label="Reward system 1",
         board_size=4,
         slippery=False,
         reward_system=ALTERNATE_REWARD_SYSTEM_1,
     )
 
     ex_3 = Experiment(
+        label="Reward system 2",
         board_size=4,
         slippery=False,
         reward_system=ALTERNATE_REWARD_SYSTEM_2,
     )
 
-    r1 = ex_1.averaged_rewards()
-    r2 = ex_2.averaged_rewards()
-    r3 = ex_3.averaged_rewards()
+    experiments = [ex_1, ex_2, ex_3]
+    results = [ex.averaged_results() for ex in experiments]
+
+    print("Success rates:")
+    for ex, (_, sr) in zip(experiments, results):
+        print(f"{ex.label}: {sr * 100:.2f}%")
 
     compare_results([
-        PlotData(r1, "r", "default"),
-        PlotData(r2, "b", "punish holes and walls"),
-        PlotData(r3, "g", "harsh punishment for holes"),
+        PlotData(r, ex.label)
+        for ex, (r, _) in zip(experiments, results)
     ], "./docs/plots/experiment_1.png")
 
 
 def experiment_2():
     ex_1 = Experiment(
+        label="Default rewards",
         board_size=8,
         slippery=False,
         reward_system=DEFAULT_REWARD_SYSTEM,
     )
 
     ex_2 = Experiment(
+        label="Reward system 1",
         board_size=8,
         slippery=False,
         reward_system=ALTERNATE_REWARD_SYSTEM_1,
     )
 
     ex_3 = Experiment(
+        label="Reward system 2",
         board_size=8,
         slippery=False,
         reward_system=ALTERNATE_REWARD_SYSTEM_2,
     )
 
-    r1 = ex_1.averaged_rewards()
-    r2 = ex_2.averaged_rewards()
-    r3 = ex_3.averaged_rewards()
+    experiments = [ex_1, ex_2, ex_3]
+    results = [ex.averaged_results() for ex in experiments]
+
+    print("Success rates:")
+    for ex, (_, sr) in zip(experiments, results):
+        print(f"{ex.label}: {sr * 100:.2f}%")
 
     compare_results([
-        PlotData(r1, "r", "default"),
-        PlotData(r2, "b", "punish holes and walls"),
-        PlotData(r3, "g", "harsh punishment for holes"),
+        PlotData(r, ex.label)
+        for ex, (r, _) in zip(experiments, results)
     ], "./docs/plots/experiment_2.png")
 
 
 def experiment_3():
     ex_1 = Experiment(
+        label="Default rewards",
         board_size=4,
         slippery=True,
         reward_system=DEFAULT_REWARD_SYSTEM,
@@ -157,6 +171,7 @@ def experiment_3():
     )
 
     ex_2 = Experiment(
+        label="Reward system 1",
         board_size=4,
         slippery=True,
         reward_system=ALTERNATE_REWARD_SYSTEM_1,
@@ -164,27 +179,30 @@ def experiment_3():
     )
 
     ex_3 = Experiment(
+        label="Reward system 2",
         board_size=4,
         slippery=True,
         reward_system=ALTERNATE_REWARD_SYSTEM_2,
         n_episodes=10_000
     )
 
-    r1 = ex_1.averaged_rewards()
-    r2 = ex_2.averaged_rewards()
-    r3 = ex_3.averaged_rewards()
+    experiments = [ex_1, ex_2, ex_3]
+    results = [ex.averaged_results() for ex in experiments]
+
+    print("Success rates:")
+    for ex, (_, sr) in zip(experiments, results):
+        print(f"{ex.label}: {sr * 100:.2f}%")
 
     compare_results([
-        PlotData(r1, "r", "default"),
-        PlotData(r2, "b", "punish holes and walls"),
-        PlotData(r3, "g", "harsh punishment for holes"),
+        PlotData(r, ex.label)
+        for ex, (r, _) in zip(experiments, results)
     ], "./docs/plots/experiment_3.png")
 
 
 def main():
     experiment_1()
-    # experiment_2()
-    # experiment_3()
+    experiment_2()
+    experiment_3()
 
 
 if __name__ == '__main__':
