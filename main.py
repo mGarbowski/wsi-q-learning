@@ -199,10 +199,54 @@ def experiment_3():
     ], "./docs/plots/experiment_3.png")
 
 
+def experiment_4():
+    experiments = [
+        Experiment(
+            label="Decay 10",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=10
+        ),
+        Experiment(
+            label="Decay 5",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=5
+        ),
+        Experiment(
+            label="Decay 1",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1
+        ),
+        Experiment(
+            label="Decay 0.1",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=0.1
+        )
+    ]
+    results = [ex.averaged_results() for ex in experiments]
+
+    print("Success rates:")
+    for ex, (_, sr) in zip(experiments, results):
+        print(f"{ex.label}: {sr * 100:.2f}%")
+
+    compare_results([
+        PlotData(r, ex.label)
+        for ex, (r, _) in zip(experiments, results)
+    ], "./docs/plots/experiment_4.png")
+
+
 def main():
-    experiment_1()
-    experiment_2()
-    experiment_3()
+    # experiment_1()
+    # experiment_2()
+    # experiment_3()
+    experiment_4()
 
 
 if __name__ == '__main__':

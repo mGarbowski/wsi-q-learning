@@ -25,3 +25,14 @@ Success rates:
 * Reward system 2: 4.28%
 
 ![plot](plots/experiment_3.png)
+
+
+## experiment_4
+
+Success rates:
+* Decay 10: 0.32%
+* Decay 5: 0.44%
+* Decay 1: 3.84%
+* Decay 0.1: 0.00%
+
+![plot](plots/experiment_4.png)
