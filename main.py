@@ -91,6 +91,18 @@ def make_env(size: int = 8, visible: bool = False, slippery: bool = False):
     return gym.make('FrozenLake-v1', desc=None, map_name=map_name, is_slippery=slippery, render_mode=render_mode)
 
 
+def show_report(number: int, experiments: list[Experiment]):
+    results = [ex.averaged_results() for ex in experiments]
+    print("Success rates:")
+    for ex, (_, sr) in zip(experiments, results):
+        print(f"{ex.label}: {sr * 100:.2f}%")
+
+    compare_results([
+        PlotData(r, ex.label)
+        for ex, (r, _) in zip(experiments, results)
+    ], f"./docs/plots/experiment_{number}.png")
+
+
 def experiment_1():
     ex_1 = Experiment(
         label="Default rewards",
@@ -242,11 +254,57 @@ def experiment_4():
     ], "./docs/plots/experiment_4.png")
 
 
+def experiment_5():
+    show_report(5, [
+        Experiment(
+            label="gamma 0",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1,
+            discount_factor=0
+        ),
+        Experiment(
+            label="gamma 0.1",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1,
+            discount_factor=0.1
+        ),
+        Experiment(
+            label="gamma 0.5",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1,
+            discount_factor=0.5
+        ),
+        Experiment(
+            label="gamma 0.9",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1,
+            discount_factor=0.9
+        ),
+        Experiment(
+            label="gamma 1",
+            board_size=8,
+            slippery=False,
+            reward_system=DEFAULT_REWARD_SYSTEM,
+            epsilon_decay=1,
+            discount_factor=1
+        ),
+    ])
+
+
 def main():
     # experiment_1()
     # experiment_2()
     # experiment_3()
-    experiment_4()
+    # experiment_4()
+    experiment_5()
 
 
 if __name__ == '__main__':

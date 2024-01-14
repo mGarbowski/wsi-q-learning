@@ -36,3 +36,14 @@ Success rates:
 * Decay 0.1: 0.00%
 
 ![plot](plots/experiment_4.png)
+
+## experiment 5
+
+Success rates:
+gamma 0: 0.00%
+gamma 0.1: 0.00%
+gamma 0.5: 0.00%
+gamma 0.9: 0.00%
+gamma 1: 0.00%
+
+![plot](plots/experiment_5.png)
