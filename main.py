@@ -1,8 +1,17 @@
+from dataclasses import dataclass
+
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
-from gymnasium import Env, Space
+from gymnasium import Env
 
+
+@dataclass
+class RewardSystem:
+    on_success: float
+    on_hole: float
+    on_nothing: float
+    on_wall_hit: float
 
 class Agent:
     def __init__(
@@ -19,7 +28,7 @@ class Agent:
         self.n_episodes = n_episodes
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
-        self.epsilon_decay = epsilon_decay
+        self.epsilon_decay_rate = 1 / (n_episodes * epsilon_decay)
         self.min_epsilon = min_epsilon
         self.epsilon = start_epsilon
 
@@ -34,7 +43,7 @@ class Agent:
         return self.q_table[state].argmax()
 
     def decay_epsilon(self):
-        self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay)
+        self.epsilon = max(self.min_epsilon, self.epsilon - self.epsilon_decay_rate)
 
     def update_q_table(self, state: int, next_state: int, action: int, reward):
         next_q_value = self.q_table[next_state].max()
@@ -42,17 +51,16 @@ class Agent:
         self.q_table[state][action] += self.learning_rate * delta
 
 
-def train_agent() -> tuple[np.ndarray, np.ndarray]:
+def train_agent(size: int, slippery: bool) -> tuple[np.ndarray, np.ndarray]:
     """Return q_table and vector of average rewards over episodes."""
-    n_episodes = 100_000
-    max_steps_per_episode = 200
-    learning_rate = 0.1
+    n_episodes = 1_000
+    learning_rate = 0.01
     start_epsilon = 1.0
-    epsilon_decay = start_epsilon / (n_episodes)
-    final_epsilon = 0.1
+    epsilon_decay = 0.5
+    final_epsilon = 0.03
     discount_factor = 0.9
 
-    env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=False, render_mode=None)
+    env = make_env(size=size, visible=False, slippery=slippery)
     agent = Agent(
         env=env,
         n_episodes=n_episodes,
@@ -67,16 +75,14 @@ def train_agent() -> tuple[np.ndarray, np.ndarray]:
     for episode in range(n_episodes):
         state, _ = env.reset()
         episode_end = False
-        step = 0
 
-        while step <= max_steps_per_episode and not episode_end:
+        while not episode_end:
             action = agent.choose_action(state)
             next_state, reward, terminated, truncated, _ = env.step(action)
 
             agent.update_q_table(state, next_state, action, float(reward))
             episode_end = truncated or terminated
             state = next_state
-            step += 1
             episode_rewards[episode] += reward
 
         agent.decay_epsilon()
@@ -84,22 +90,35 @@ def train_agent() -> tuple[np.ndarray, np.ndarray]:
     return agent.q_table, episode_rewards
 
 
-def average_episode_rewards(n_runs: int = 25):
+def average_episode_rewards(size: int, n_runs: int = 25):
     average_rewards = np.zeros(1_000)
+    success_rate = 0
+    q_table = None
     for run in range(n_runs):
-        _, rewards = train_agent()
+        q_table, rewards = train_agent(size, False)
+        success_rate += sum(rewards) / len(rewards)
         average_rewards += rewards
     average_rewards /= n_runs
+    success_rate /= n_runs
+    print(f"Average success rate: {success_rate}")
     plot_rewards_over_episodes(average_rewards)
-
+    present_optimal_policy(q_table, size, False)
 
 def plot_rewards_over_episodes(rewards: np.ndarray):
-    plt.plot(rewards)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.spines['left'].set_position('center')
+    ax.spines['bottom'].set_position('zero')
+    ax.spines['right'].set_color('none')
+    ax.spines['top'].set_color('none')
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    plt.plot(rewards, 'r')
     plt.show()
 
 
-def present_optimal_policy(q_table: np.ndarray):
-    env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=False, render_mode="human")
+def present_optimal_policy(q_table: np.ndarray, size: int, slippery: bool):
+    env = make_env(size=size, slippery=slippery, visible=True)
     state, _ = env.reset()
     end = False
     while not end:
@@ -108,10 +127,18 @@ def present_optimal_policy(q_table: np.ndarray):
         end = terminated or truncated
 
 
+def make_env(size: int = 8, visible: bool = False, slippery: bool = False):
+    map_name = f"{size}x{size}"
+    render_mode = "human" if visible else None
+    return gym.make('FrozenLake-v1', desc=None, map_name=map_name, is_slippery=slippery, render_mode=render_mode)
+
+
 def main():
-    q_table, rewards = train_agent()
-    plot_rewards_over_episodes(rewards)
-    present_optimal_policy(q_table)
+    # q_table, rewards = train_agent()
+    # plot_rewards_over_episodes(rewards)
+    # present_optimal_policy(q_table)
+
+    average_episode_rewards(4, 25)
 
 
 if __name__ == '__main__':
