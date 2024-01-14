@@ -13,6 +13,7 @@ class RewardSystem:
     on_nothing: float
     on_wall_hit: float
 
+
 class Agent:
     def __init__(
             self,
@@ -50,6 +51,31 @@ class Agent:
         delta = reward + self.discount_factor * next_q_value - self.q_table[state][action]
         self.q_table[state][action] += self.learning_rate * delta
 
+    def episode(self) -> float:
+        total_rewards = 0
+        state, _ = self.env.reset()
+
+        episode_end = False
+        while not episode_end:
+            action = self.choose_action(state)
+            next_state, reward, terminated, truncated, _ = self.env.step(action)
+            self.update_q_table(state, next_state, action, float(reward))
+
+            episode_end = truncated or terminated
+            state = next_state
+            total_rewards += reward
+
+        return total_rewards
+
+    def train(self) -> tuple[np.ndarray, np.ndarray]:
+        """Train agent and return q_table and vector of rewards over episodes"""
+        episode_rewards = np.zeros(self.n_episodes)
+        for episode in range(self.n_episodes):
+            episode_rewards[episode] = self.episode()
+            self.decay_epsilon()
+
+        return self.q_table, episode_rewards
+
 
 def train_agent(size: int, slippery: bool) -> tuple[np.ndarray, np.ndarray]:
     """Return q_table and vector of average rewards over episodes."""
@@ -71,23 +97,7 @@ def train_agent(size: int, slippery: bool) -> tuple[np.ndarray, np.ndarray]:
         min_epsilon=final_epsilon
     )
 
-    episode_rewards = np.zeros(n_episodes)
-    for episode in range(n_episodes):
-        state, _ = env.reset()
-        episode_end = False
-
-        while not episode_end:
-            action = agent.choose_action(state)
-            next_state, reward, terminated, truncated, _ = env.step(action)
-
-            agent.update_q_table(state, next_state, action, float(reward))
-            episode_end = truncated or terminated
-            state = next_state
-            episode_rewards[episode] += reward
-
-        agent.decay_epsilon()
-
-    return agent.q_table, episode_rewards
+    return agent.train()
 
 
 def average_episode_rewards(size: int, n_runs: int = 25):
@@ -103,6 +113,7 @@ def average_episode_rewards(size: int, n_runs: int = 25):
     print(f"Average success rate: {success_rate}")
     plot_rewards_over_episodes(average_rewards)
     present_optimal_policy(q_table, size, False)
+
 
 def plot_rewards_over_episodes(rewards: np.ndarray):
     fig = plt.figure()
