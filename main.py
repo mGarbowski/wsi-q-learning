@@ -47,6 +47,7 @@ class Experiment:
         avg_rewards /= self.n_independent_runs
         return avg_rewards
 
+
 @dataclass
 class PlotData:
     data: np.ndarray
@@ -54,7 +55,7 @@ class PlotData:
     label: str
 
 
-def compare_results(results: list[PlotData]):
+def compare_results(results: list[PlotData], plot_path: str = None):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.spines['left'].set_position('center')
@@ -66,6 +67,8 @@ def compare_results(results: list[PlotData]):
     for result in results:
         plt.plot(result.data, result.color, label=result.label)
     plt.legend()
+    if plot_path is not None:
+        plt.savefig(plot_path)
     plt.show()
 
 
@@ -112,10 +115,76 @@ def experiment_1():
         PlotData(r1, "r", "default"),
         PlotData(r2, "b", "punish holes and walls"),
         PlotData(r3, "g", "harsh punishment for holes"),
-    ])
+    ], "./docs/plots/experiment_1.png")
+
+
+def experiment_2():
+    ex_1 = Experiment(
+        board_size=8,
+        slippery=False,
+        reward_system=DEFAULT_REWARD_SYSTEM,
+    )
+
+    ex_2 = Experiment(
+        board_size=8,
+        slippery=False,
+        reward_system=ALTERNATE_REWARD_SYSTEM_1,
+    )
+
+    ex_3 = Experiment(
+        board_size=8,
+        slippery=False,
+        reward_system=ALTERNATE_REWARD_SYSTEM_2,
+    )
+
+    r1 = ex_1.averaged_rewards()
+    r2 = ex_2.averaged_rewards()
+    r3 = ex_3.averaged_rewards()
+
+    compare_results([
+        PlotData(r1, "r", "default"),
+        PlotData(r2, "b", "punish holes and walls"),
+        PlotData(r3, "g", "harsh punishment for holes"),
+    ], "./docs/plots/experiment_2.png")
+
+
+def experiment_3():
+    ex_1 = Experiment(
+        board_size=4,
+        slippery=True,
+        reward_system=DEFAULT_REWARD_SYSTEM,
+        n_episodes=10_000
+    )
+
+    ex_2 = Experiment(
+        board_size=4,
+        slippery=True,
+        reward_system=ALTERNATE_REWARD_SYSTEM_1,
+        n_episodes=10_000
+    )
+
+    ex_3 = Experiment(
+        board_size=4,
+        slippery=True,
+        reward_system=ALTERNATE_REWARD_SYSTEM_2,
+        n_episodes=10_000
+    )
+
+    r1 = ex_1.averaged_rewards()
+    r2 = ex_2.averaged_rewards()
+    r3 = ex_3.averaged_rewards()
+
+    compare_results([
+        PlotData(r1, "r", "default"),
+        PlotData(r2, "b", "punish holes and walls"),
+        PlotData(r3, "g", "harsh punishment for holes"),
+    ], "./docs/plots/experiment_3.png")
+
 
 def main():
     experiment_1()
+    # experiment_2()
+    # experiment_3()
 
 
 if __name__ == '__main__':
