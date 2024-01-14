@@ -14,10 +14,24 @@ class RewardSystem:
     on_wall_hit: float
 
 
+DEFAULT_REWARD_SYSTEM = RewardSystem(1, 0, 0, 0)
+ALTERNATE_REWARD_SYSTEM = RewardSystem(10, -5, 0, -1)
+
+
+@dataclass
+class EnvironmentResponse:
+    prev_state: int
+    state: int
+    reward: float
+    terminated: bool
+    truncated: bool
+
+
 class Agent:
     def __init__(
             self,
             env: Env,
+            reward_system: RewardSystem,
             n_episodes: int,
             learning_rate: float,
             discount_factor: float,
@@ -26,6 +40,7 @@ class Agent:
             min_epsilon: float
     ):
         self.env = env
+        self.reward_system = reward_system
         self.n_episodes = n_episodes
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
@@ -51,6 +66,18 @@ class Agent:
         delta = reward + self.discount_factor * next_q_value - self.q_table[state][action]
         self.q_table[state][action] += self.learning_rate * delta
 
+    def calculate_reward(self, response: EnvironmentResponse):
+        if response.terminated and response.reward == 1:
+            return self.reward_system.on_success
+
+        if response.terminated and response.reward == 0:
+            return self.reward_system.on_hole
+
+        if response.prev_state == response.state:
+            return self.reward_system.on_wall_hit
+
+        return self.reward_system.on_nothing
+
     def episode(self) -> float:
         total_rewards = 0
         state, _ = self.env.reset()
@@ -58,12 +85,14 @@ class Agent:
         episode_end = False
         while not episode_end:
             action = self.choose_action(state)
-            next_state, reward, terminated, truncated, _ = self.env.step(action)
-            self.update_q_table(state, next_state, action, float(reward))
+            next_state, env_reward, terminated, truncated, _ = self.env.step(action)
+            response = EnvironmentResponse(state, next_state, float(env_reward), terminated, truncated)
+            reward = self.calculate_reward(response)
+            self.update_q_table(state, next_state, action, reward)
 
             episode_end = truncated or terminated
             state = next_state
-            total_rewards += reward
+            total_rewards += env_reward
 
         return total_rewards
 
@@ -89,6 +118,7 @@ def train_agent(size: int, slippery: bool) -> tuple[np.ndarray, np.ndarray]:
     env = make_env(size=size, visible=False, slippery=slippery)
     agent = Agent(
         env=env,
+        reward_system=ALTERNATE_REWARD_SYSTEM,
         n_episodes=n_episodes,
         learning_rate=learning_rate,
         discount_factor=discount_factor,
