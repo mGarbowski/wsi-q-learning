@@ -76,8 +76,8 @@ def comparing_reward_systems_slippery():
 
 
 def main():
-    # compare_default_rewards_over_board_sizes()
-    # comparing_reward_systems_not_slippery()
+    compare_default_rewards_over_board_sizes()
+    comparing_reward_systems_not_slippery()
     comparing_reward_systems_slippery()
 
 
