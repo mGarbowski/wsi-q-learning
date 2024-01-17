@@ -7,6 +7,7 @@ from gymnasium import Env
 @dataclass
 class RewardSystem:
     on_success: float
+    on_fail: float
     on_hole: float
     on_nothing: float
     on_wall_hit: float
@@ -61,16 +62,19 @@ class Agent:
         self.q_table[state][action] += self.learning_rate * delta
 
     def calculate_reward(self, response: EnvironmentResponse):
-        if response.terminated and response.reward == 1:
+        if response.truncated:  # reached limit of steps
+            return self.reward_system.on_fail
+
+        if response.terminated and response.reward == 1:  # reached the gift
             return self.reward_system.on_success
 
-        if response.terminated and response.reward == 0:
+        if response.terminated and response.reward == 0:  # fell into a hole
             return self.reward_system.on_hole
 
-        if response.prev_state == response.state:
+        if response.prev_state == response.state:  # bumped into the wall
             return self.reward_system.on_wall_hit
 
-        return self.reward_system.on_nothing
+        return self.reward_system.on_nothing  # otherwise
 
     def episode(self, training: bool = True) -> float:
         total_rewards = 0
