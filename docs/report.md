@@ -8,8 +8,8 @@ z biblioteki gymnasium.
 ## Implementacja
 
 ### Epsilon decay
-Ze względu na słabe uzyskiwane początkowo wyniki, postanowiłem zmodyfikować algorytm względem postaci przedstawionej na
-wykładzie o mechanizm stopniowego obniżania wartości epsilon (prawdopodobieństwa wyboru losowego ruchu), początkowe
+Ze względu na słabe uzyskiwane początkowo wyniki, postanowiłem zmodyfikować algorytm o mechanizm stopniowego obniżania 
+wartości epsilon (prawdopodobieństwa wyboru losowego ruchu), początkowe
 prawdopodobieństwo wynosi 1 i w miarę uczenia agenta maleje do wartości minimalnej (rośnie prawdopodobieństwo wyboru
 akcji w sposób zachłanny) - taki mechanizm powinien poprawić zdolność agenta do eksploracji w początkowej fazie i
 eksploatacji w późniejszej fazie.
